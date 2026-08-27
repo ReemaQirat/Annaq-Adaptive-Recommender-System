@@ -1,0 +1,660 @@
+/* ===== RESET ===== */
+
+@font-face {
+    font-family: "Zanjabeel";
+    src: url("../assets/fonts/Zanjabeel-Regular.otf") format("truetype");
+    font-weight: normal;
+    font-style: normal;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+html {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    /* الخلفية على html عشان لو الشاشة بنسبة مختلفة عن 16:9 (مثل ultrawide)
+       تظهر المنطقة المتروكة بنفس لون الواجهة، ما تطلع بيضاء */
+    background: linear-gradient(180deg, #020617 0%, #1e293b 100%);
+}
+
+body {
+    font-family: "Zanjabeel-Regular", sans-serif;
+    background: linear-gradient(180deg, #020617 0%, #1e293b 100%);
+    color: #e2e8f0;
+    overflow: hidden;
+}
+
+/* ===== KIOSK SCALING CANVAS =====
+   كل الواجهة مصممة على 1920×1080. الـ #app يبقى بهذا الحجم دائماً،
+   و JS يعمل scale + translate لتوسيطه على أي شاشة مع الحفاظ على النسب.
+   كذا ما تتداخل العناصر ولا تتغير الأحجام النسبية بين الأجهزة.
+*/
+#app {
+    width: 1920px;
+    height: 1080px;
+    position: absolute;
+    top: 0;
+    left: 0;
+    transform-origin: top left;
+}
+
+/* ===== SCREEN ===== */
+.screen {
+    width: 100%;
+    height: 100%;
+    padding: 40px;
+    position: relative;
+}
+
+/* #content يملأ المساحة المتاحة داخل .screen عشان .list-view تقدر تستخدم 100% */
+#content {
+    height: 100%;
+    box-sizing: border-box;
+}
+
+/* ===== TOP BAR ===== */
+.top-bar {
+    position: absolute;
+    top: 30px;
+    right: 40px;
+}
+
+/* ===== KIOSK LOGO ===== */
+.kiosk-logo {
+    position: absolute;
+    top: 30px;
+    left: 40px;
+    z-index: 10;
+}
+.kiosk-logo img {
+    height: 80px;
+    width: auto;
+    max-width: 200px;
+    object-fit: contain;
+}
+
+/* ===== BUTTON STYLE (matches figma) ===== */
+.btn-outline {
+    padding: 12px 28px;
+    border-radius: 999px;
+    border: 1px solid #ff7849;
+    background: transparent;
+    color: #ff7849;
+    font-size: 20px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+/* Hover */
+.btn-outline:hover {
+    background: rgba(255, 120, 73, 0.1);
+}
+
+/* Press */
+.btn-outline:active {
+    transform: scale(0.95);
+    background: rgba(255, 120, 73, 0.2);
+}
+
+/* Center button (bottom) */
+.center-btn {
+    display: block;
+    margin: 40px auto 0;
+}
+
+/* ===== CAROUSEL VIEW ===== */
+.carousel-view {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+/* ===== CAROUSEL ===== */
+.carousel {
+    display: flex;
+    gap: 40px;
+    overflow-x: auto;
+    padding: 80px 0;
+    align-items: center;
+
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+
+    direction: rtl;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* spacers قبل وبعد الكاردز عشان أول/آخر كارد يقدرون يتمركزون
+   العرض = نصف الـ viewport ناقص نصف عرض الكارد النشط (620/2 = 310) */
+.carousel::before,
+.carousel::after {
+    content: '';
+    flex: 0 0 calc(50% - 310px);
+    min-width: calc(50% - 310px);
+}
+
+/* Hide scrollbar (kiosk feel) */
+.carousel::-webkit-scrollbar {
+    display: none;
+}
+
+/* ===== CARD (horizontal layout — figma) ===== */
+.card {
+    flex: 0 0 auto;
+    width: 620px;
+    height: 280px;
+    padding: 22px;
+    display: flex;
+    flex-direction: row-reverse; /* image visually on left in RTL */
+    align-items: stretch;
+    gap: 22px;
+    position: relative;
+
+    border-radius: 28px;
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(255, 120, 73, 0.18);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+
+    scroll-snap-align: center;
+
+    transform: scale(0.82);
+    opacity: 0.45;
+    transition: all 0.35s ease;
+    cursor: pointer;
+}
+
+/* Active (center card) */
+.card.active {
+    transform: scale(1);
+    opacity: 1;
+    border-color: rgba(255, 120, 73, 0.55);
+    box-shadow: 0 0 35px rgba(255, 120, 73, 0.18),
+                0 8px 30px rgba(0, 0, 0, 0.35);
+}
+
+/* Image wrap */
+.card-image-wrap {
+    flex: 0 0 230px;
+    height: 100%;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #0a0f1c;
+}
+
+.card-image-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* Text content (right side in RTL) */
+.card-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 6px 4px 6px 0;
+    text-align: right;
+    direction: rtl;
+    overflow: hidden;
+}
+
+.card-content h2 {
+    font-size: 26px;
+    font-weight: 700;
+    color: #f8fafc;
+    margin-bottom: 6px;
+    line-height: 1.2;
+}
+
+.card-category {
+    font-size: 14px;
+    color: #ff7849;
+    margin-bottom: 12px;
+    letter-spacing: 0.3px;
+}
+
+.card-desc {
+    font-size: 13px;
+    line-height: 1.65;
+    color: #cbd5e1;
+    opacity: 0.85;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+}
+
+/* ===== HEART (LIKE) BUTTON ===== */
+.card-heart {
+    position: absolute;
+    /* مرفوع شوي ومائل لليسار */
+    bottom: 32px;
+    right: 36px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 120, 73, 0.6);
+    background: transparent;
+    color: #ff7849;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    transition: all 0.25s ease;
+    z-index: 5;
+    padding: 0;
+}
+
+.card-heart:hover {
+    background: rgba(255, 120, 73, 0.12);
+    transform: scale(1.08);
+}
+
+.card-heart.liked {
+    background: #ff7849;
+    color: #fff;
+    border-color: #ff7849;
+    box-shadow: 0 4px 14px rgba(255, 120, 73, 0.45);
+}
+
+.card-heart.liked:hover {
+    transform: scale(1.08);
+}
+
+.card-heart svg {
+    width: 20px;
+    height: 20px;
+    fill: currentColor;
+    pointer-events: none;
+}
+
+/* ===== DETAILS VIEW ===== */
+.details-view {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 30px;
+    gap: 22px;
+}
+
+/* Big card */
+.details-card {
+    width: 90%;
+    max-width: 920px;
+    padding: 36px 44px;
+    border-radius: 30px;
+
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(255, 120, 73, 0.25);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+
+    direction: rtl;
+    text-align: right;
+    position: relative;
+    box-shadow: 0 0 35px rgba(255, 120, 73, 0.08),
+                0 8px 30px rgba(0, 0, 0, 0.35);
+}
+
+.details-title {
+    font-size: 30px;
+    font-weight: 700;
+    color: #f8fafc;
+    margin-bottom: 22px;
+}
+
+/* Gallery */
+.details-gallery {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 22px;
+    flex-wrap: nowrap;
+}
+
+.details-gallery img {
+    width: 170px;
+    height: 130px;
+    border-radius: 14px;
+    object-fit: cover;
+    opacity: 0.7;
+    transform: scale(0.92);
+    transition: 0.3s ease;
+    cursor: pointer;
+}
+
+.details-gallery img:not(.main):hover {
+    opacity: 0.9;
+    transform: scale(0.96);
+}
+
+.details-gallery img.main {
+    width: 230px;
+    height: 165px;
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.details-desc {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #cbd5e1;
+    margin-bottom: 10px;
+    opacity: 0.9;
+}
+
+.details-category {
+    font-size: 13px;
+    color: #ff7849;
+    margin-bottom: 22px;
+}
+
+.details-actions {
+    display: flex;
+    justify-content: flex-start; /* maps button visually on left in RTL */
+}
+
+/* ===== LIST VIEW ===== */
+.list-view {
+    width: 88%;
+    max-width: 860px;
+    margin: 0 auto;
+    height: 100%;
+    /* عمودي: عنوان فوق، سكرول وسط، زر تحت */
+    display: flex;
+    flex-direction: column;
+    padding: 70px 10px 20px;
+    direction: rtl;
+    box-sizing: border-box;
+}
+
+/* الجزء اللي فيه السكرول (الكاردز) */
+.list-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding-left: 6px;
+    /* مسافة عن زر الرجوع */
+    margin-bottom: 14px;
+    min-height: 0;
+}
+
+.list-scroll::-webkit-scrollbar {
+    width: 6px;
+}
+.list-scroll::-webkit-scrollbar-thumb {
+    background: rgba(255, 120, 73, 0.4);
+    border-radius: 3px;
+}
+
+/* Title */
+.list-view .title {
+    text-align: right;
+    margin-bottom: 18px;
+    font-size: 24px !important;
+    font-weight: 700;
+    color: #f8fafc;
+    line-height: 1.2;
+    flex-shrink: 0;
+}
+
+/* زر الرجوع: ما ينضغط، ثابت تحت */
+.list-view .center-btn {
+    margin: 0 auto;
+    flex-shrink: 0;
+}
+
+/* List Card */
+.list-card {
+    display: grid;
+    grid-template-columns: 160px 1fr 95px;
+    align-items: center;
+    gap: 22px;
+
+    padding: 12px 22px;
+    margin-bottom: 14px;
+
+    border-radius: 22px;
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(255, 120, 73, 0.18);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+
+    cursor: pointer;
+    transition: 0.3s;
+    direction: rtl;
+}
+
+.list-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 120, 73, 0.5);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* Place image — أكبر وأوضح */
+.list-card .place-img {
+    width: 160px !important;
+    height: 110px !important;
+    border-radius: 14px;
+    object-fit: cover;
+    display: block;
+}
+
+/* Text in middle */
+.list-card .text {
+    text-align: right;
+    min-width: 0;
+}
+
+.list-card .text h2 {
+    font-size: 22px;
+    color: #f8fafc;
+    margin-bottom: 6px;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.list-card .text .cat {
+    font-size: 13px;
+    color: #ff7849;
+}
+
+/* QR (HTML الأخير → في RTL يطلع يسار) */
+.list-card .qr {
+    width: 95px;
+    height: 95px;
+    background: #fff;
+    border-radius: 14px;
+    overflow: hidden;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
+
+.list-card .qr img {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+    border-radius: 0;
+    object-fit: contain;
+}
+
+/* ===== MAP QR OVERLAY ===== */
+.map-qr-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.map-qr-modal {
+    background: linear-gradient(145deg, #0f172a, #1e293b);
+    padding: 40px 48px;
+    border-radius: 26px;
+    text-align: center;
+    color: #f8fafc;
+    border: 1px solid rgba(255, 120, 73, 0.4);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5),
+                0 0 40px rgba(255, 120, 73, 0.15);
+    direction: rtl;
+    max-width: 460px;
+}
+
+.map-qr-modal h2 {
+    color: #ff7849;
+    margin-bottom: 8px;
+    font-size: 24px;
+}
+
+.map-qr-modal p {
+    font-size: 15px;
+    opacity: 0.85;
+    margin-bottom: 22px;
+}
+
+.map-qr-img {
+    background: #fff;
+    padding: 14px;
+    border-radius: 16px;
+    display: inline-block;
+    margin-bottom: 22px;
+}
+
+.map-qr-img img {
+    display: block;
+    width: 280px;
+    height: 280px;
+}
+
+.map-qr-modal .btn-outline {
+    margin-top: 0;
+}
+
+/* Persistent microphone indicator */
+.mic-indicator {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-color: #3b82f6;  /* blue when listening */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: default; /* no click action */
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    transition: background-color 0.3s;
+    z-index: 1000;
+}
+
+.mic-indicator.grey {
+    background-color: #9ca3af; /* grey when not listening */
+}
+
+.mic-indicator i {
+    font-size: 28px;
+    color: white;
+}
+
+/* ===== INITIAL SCREEN — لوحة الترحيب الشخصية + أزرار المزاج ===== */
+.initial-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    padding: 120px 40px 60px;
+    box-sizing: border-box;
+}
+
+.welcome-card {
+    text-align: center;
+    max-width: 900px;
+    animation: fadeInUp 0.6s ease;
+}
+
+.welcome-title {
+    font-size: 72px;
+    color: #ff7849;
+    margin: 0 0 20px;
+    font-weight: 800;
+    letter-spacing: -1px;
+}
+
+.welcome-subtitle {
+    font-size: 30px;
+    opacity: 0.85;
+    margin: 0 0 28px;
+    transition: opacity 0.4s ease;
+    line-height: 1.4;
+}
+
+.mood-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px 28px;
+    background: rgba(255, 120, 73, 0.12);
+    border: 1px solid rgba(255, 120, 73, 0.4);
+    border-radius: 999px;
+    font-size: 24px;
+    color: #ff7849;
+    animation: fadeInUp 0.5s ease;
+}
+
+.mood-emoji {
+    font-size: 36px;
+    line-height: 1;
+}
+
+/* مؤشّر الجنس — دائرة ملوّنة بسيطة (وردي للأنثى / أزرق للذكر) */
+.gender-icon {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    transition: background 0.3s ease;
+}
+.gender-icon.female {
+    background: #ff6384;     /* وردي مرجاني للأنثى */
+    box-shadow: 0 0 0 4px rgba(255, 99, 132, 0.18);
+}
+.gender-icon.male {
+    background: #3b82f6;     /* أزرق للذكر */
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.18);
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
